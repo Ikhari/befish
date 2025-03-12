@@ -1,3 +1,4 @@
+-- UI.lua
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/astraln/SentinelUILIB/main/UI.lua', true))()
 
 local window = Library:Window('Sentinel')
@@ -5,9 +6,11 @@ local window = Library:Window('Sentinel')
 -- Aktifkan fitur drag pada UI (jika library mendukung)
 if window.GetMain and window:GetMain() then
     local mainFrame = window:GetMain()
-    mainFrame.Draggable = true
-    mainFrame.Active = true
-    mainFrame.Selectable = true
+    if mainFrame then
+        mainFrame.Draggable = true
+        mainFrame.Active = true
+        mainFrame.Selectable = true
+    end
 end
 
 local tab = window:Tab('Home')
