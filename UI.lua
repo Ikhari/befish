@@ -1,61 +1,44 @@
-local AsUI = {}
+-- UI.lua
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- Load the actual UI library
-local success, Library = pcall(function()
-    return loadstring(game:HttpGet('https://raw.githubusercontent.com/AkinaRulezx/AsUI/main/UI', true))()
-end)
+local Sentinel = loadstring(game:HttpGet('https://raw.githubusercontent.com/astraln/SentinelUILIB/main/UI.lua', true))()
 
-if not success then
-    warn("Failed to load UI library:", Library)
-    return
+local function MakeDraggable(frame)
+    local dragging, dragOffset = false, Vector2.new()
+    
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragOffset = input.Position - frame.AbsolutePosition
+            frame.BackgroundTransparency = 0.85
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+            frame.BackgroundTransparency = 0.8
+        end
+    end)
+    
+    RunService.Heartbeat:Connect(function()
+        if dragging and frame then
+            local mousePos = UserInputService:GetMouseLocation()
+            local newPos = mousePos - dragOffset
+            
+            newPos = Vector2.new(
+                math.clamp(newPos.X, 0, workspace.CurrentCamera.ViewportSize.X - frame.AbsoluteSize.X),
+                math.clamp(newPos.Y, 0, workspace.CurrentCamera.ViewportSize.Y - frame.AbsoluteSize.Y)
+            )
+            
+            frame.Position = UDim2.new(0, newPos.X, 0, newPos.Y)
+        end
+    end)
 end
 
-function AsUI:Window(title)
-    local window = Library:Window(title)
-
-    -- Custom drag implementation
-    local UserInputService = game:GetService("UserInputService")
-    local RunService = game:GetService("RunService")
-
-    local function makeDraggable(frame)
-        local dragging = false
-        local dragOffset = Vector2.new()
-
-        frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                dragOffset = input.Position - frame.AbsolutePosition
-                frame.BackgroundTransparency = 0.9
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-                frame.BackgroundTransparency = 0.8
-            end
-        end)
-
-        RunService.Heartbeat:Connect(function()
-            if dragging then
-                local mousePos = UserInputService:GetMouseLocation()
-                local newPos = mousePos - dragOffset
-
-                -- Screen bounds checking
-                newPos = Vector2.new(
-                    math.clamp(newPos.X, 0, workspace.CurrentCamera.ViewportSize.X - frame.AbsoluteSize.X),
-                    math.clamp(newPos.Y, 0, workspace.CurrentCamera.ViewportSize.Y - frame.AbsoluteSize.Y)
-                )
-
-                frame.Position = UDim2.new(0, newPos.X, 0, newPos.Y)
-            end
-        end)
-    end
-
-    -- Make main window draggable
-    makeDraggable(window:GetMain())
-
+return function(title)
+    local window = Sentinel:Window(title)
+    MakeDraggable(window:GetMain())
     return window
 end
-
-return AsUI
