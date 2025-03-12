@@ -1,5 +1,5 @@
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/AkinaRulezx/AsUI/main/UI', true))()
-local window = Library:Window('Be a Fish')
+local window = Library:Window('Be a Fish Test')
 
 -- ===================================
 -- SPEED BOOST SECTION (dengan perbaikan memory leak)
