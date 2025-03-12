@@ -6,11 +6,10 @@ local speedBoostTab = window:Tab('Speed Boost')
 
 speedBoostTab:Label("Speed Boost", Color3.fromRGB(255, 255, 255))
 
-local connection
 speedBoostTab:Slider("Speed", 16, 1000, 55, function(value)
     local player = game.Players.LocalPlayer
     if player.Character and player.Character:FindFirstChildOfClass('Humanoid') then
-        player.Character.Humanoid.WalkSpeed = value
+        player.Character.Humanoid.WalkSpeed = value  -- Set WalkSpeed to the slider value
     end
 end)
 
@@ -22,30 +21,33 @@ speedBoostTab:Toggle('Enable Speed Boost', false, function(state)
     local player = game.Players.LocalPlayer
     if speedBoostToggle then
         local character = player.Character or player.CharacterAdded:Wait()
+
+        -- Set initial WalkSpeed change if desired
         player.Character.Humanoid.WalkSpeed = 55
 
-        connection = game:GetService("RunService").Stepped:Connect(function()
-            if not speedBoostToggle then
-                connection:Disconnect()
-                return
+        game:GetService("RunService").Stepped:Connect(function()
+            if not speedBoostToggle then return end
+            if player.Character ~= character then
+                character = player.Character
+                player.Character.Humanoid.WalkSpeed = 55  
             end
+
             if player.Character.Humanoid.WalkSpeed ~= 55 then
                 player.Character.Humanoid.WalkSpeed = 55
             end
         end)
     else
-        if connection then connection:Disconnect() end
         if player.Character and player.Character:FindFirstChildOfClass('Humanoid') then
-            player.Character.Humanoid.WalkSpeed = 16
+            player.Character.Humanoid.WalkSpeed = 16  -- Reset to default WalkSpeed
         end
     end
 end)
 
 local noclipTab = window:Tab('Noclip')
+
 noclipTab:Label("Noclip", Color3.fromRGB(255, 255, 255))
 
 local noclipToggle = false
-local noclipConnection
 noclipTab:Toggle('Enable Noclip', false, function(state)
     noclipToggle = state
     if noclipToggle then
@@ -62,24 +64,47 @@ noclipTab:Toggle('Enable Noclip', false, function(state)
 
         noclip()
 
-        noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-            if not noclipToggle then
-                noclipConnection:Disconnect()
-                return
-            end
+        game:GetService("RunService").Stepped:Connect(function()
+            if not noclipToggle then return end
             if player.Character ~= character then
                 character = player.Character
-                noclip()
+                noclip()  -- Reapply noclip
             end
         end)
+
+        while noclipToggle do
+            wait(0.001)
+            if player.Character and player.Character:FindFirstChildOfClass('Humanoid') then
+                noclip()
+            end
+        end
     else
-        if noclipConnection then noclipConnection:Disconnect() end
         local player = game.Players.LocalPlayer
         local character = player.Character
+        -- Restore collisions
         for _, v in pairs(character:GetDescendants()) do
             if v:IsA("BasePart") and v.CanCollide == false then
                 v.CanCollide = true
             end
         end
     end
+end)
+
+local othersTab = window:Tab('Others')
+
+othersTab:Button("Inf Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()  -- Load Infinite Yield
+end)
+
+local discordTab = window:Tab('Discord')
+
+discordTab:Label("Join our Discord:", Color3.fromRGB(255, 255, 255))
+
+discordTab:Button("Copy Discord Link", function()
+    setclipboard("https://discord.gg/4Gq4585R7n")  
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Discord Link Copied",
+        Text = "The Discord link has been copied to your clipboard!",
+        Duration = 2
+    })
 end)
