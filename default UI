@@ -2,24 +2,38 @@ local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/astra
 
 local window = Library:Window('Sentinel')
 
--- Membuat UI bisa digerakkan
-window:GetMain().Draggable = true
-window:GetMain().Active = true
-window:GetMain().Selectable = true
+-- Aktifkan fitur drag pada UI (jika library mendukung)
+if window.GetMain and window:GetMain() then
+    local mainFrame = window:GetMain()
+    mainFrame.Draggable = true
+    mainFrame.Active = true
+    mainFrame.Selectable = true
+end
 
 local tab = window:Tab('Home')
 
-tab:Button('Button', function() end)
-tab:Toggle('Toggle', false, function(t) end)
-tab:Label("Label")
-tab:Keybind("Keybind", Enum.KeyCode.E, function(t) end)
+tab:Button('Button', function()
+    -- Fungsi button
+end)
 
-local dropdown = tab:Dropdown("Dropdown", {"1", "2", '3', '4', '5', '6', '7', '8'}, function(item)
+tab:Toggle('Toggle', false, function(t)
+    -- Fungsi toggle
+end)
+
+tab:Label("Label")
+
+tab:Keybind("Keybind", Enum.KeyCode.E, function(t)
+    -- Fungsi keybind
+end)
+
+local dropdown = tab:Dropdown("Dropdown", {"1", "2", "3", "4", "5", "6", "7", "8"}, function(item)
     print(item)
 end)
 
 tab:Button('Refresh', function()
-    dropdown:RefreshDropdown({'69'})
+    dropdown:RefreshDropdown({"69"})
 end)
 
-tab:Slider("Slider", 16, 1000, 16, function() end)
+tab:Slider("Slider", 16, 1000, 16, function(value)
+    -- Fungsi slider
+end)
