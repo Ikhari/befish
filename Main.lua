@@ -1,70 +1,145 @@
--- UI.lua
-local UserInputService = game:GetService("UserInputService")
+-- Main.lua
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
 
-local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/astraln/SentinelUILIB/main/UI.lua', true))()
+-- Load UI dengan error handling
+local success, CreateWindow = pcall(function()
+    return loadstring(game:HttpGet('https://raw.githubusercontent.com/astraln/SentinelUILIB/main/UI.lua', true))()
+end)
 
-local function CreateDraggableWindow(title)
-    local window = Library:Window(title, {
-        main_color = Color3.fromRGB(35, 35, 35),
-        min_size = Vector2.new(350, 250)
-    })
-    
-    local mainFrame = window:GetMain()
-    
-    -- Custom Drag System
-    local dragToggle, dragInput, dragStart, startPos = nil, nil, nil, nil
-    
-    local function UpdateInput(input)
-        local delta = input.Position - dragStart
-        local newPos = UDim2.new(
-            startPos.X.Scale, 
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale, 
-            startPos.Y.Offset + delta.Y
-        )
-        
-        -- Boundary Constraint
-        newPos = UDim2.new(
-            math.clamp(newPos.X.Scale, 0, 1),
-            math.clamp(newPos.X.Offset, 0, workspace.CurrentCamera.ViewportSize.X - mainFrame.AbsoluteSize.X),
-            math.clamp(newPos.Y.Scale, 0, 1),
-            math.clamp(newPos.Y.Offset, 0, workspace.CurrentCamera.ViewportSize.Y - mainFrame.AbsoluteSize.Y)
-        )
-        
-        TweenService:Create(mainFrame, TweenInfo.new(0.15), {Position = newPos}):Play()
-    end
-
-    mainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragToggle = true
-            dragStart = input.Position
-            startPos = mainFrame.Position
-            mainFrame.BackgroundTransparency = 0.9
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragToggle = false
-                    mainFrame.BackgroundTransparency = 0.85
-                end
-            end)
-        end
-    end)
-
-    mainFrame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragToggle then
-            UpdateInput(input)
-        end
-    end)
-    
-    return window
+if not success then
+    warn("Failed to load UI library!")
+    return
 end
 
-return CreateDraggableWindow
+local window = CreateWindow("Fish Simulator Premium")
+
+-- ========== SYSTEM INITIALIZATION ==========
+local defaultWalkSpeed = 16
+local defaultJumpPower = 50
+
+local function InitializeCharacter()
+    local character = player.Character or player.CharacterAdded:Wait()
+    if character:FindFirstChild("Humanoid") then
+        defaultWalkSpeed = character.Humanoid.WalkSpeed
+        defaultJumpPower = character.Humanoid.JumpPower
+    end
+end
+
+InitializeCharacter()
+
+-- ========== MOVEMENT SYSTEM ==========
+local movementTab = window:Tab("Movement")
+
+-- Speed Control
+local speedToggle = false
+local speedConnection = nil
+
+local speedSlider = movementTab:Slider("Walk Speed", 16, 500, defaultWalkSpeed, function(value)
+    if not speedToggle and player.Character and player.Character.Humanoid then
+        player.Character.Humanoid.WalkSpeed = value
+    end
+end)
+
+movementTab:Toggle("Lock Speed", false, function(state)
+    speedToggle = state
+    
+    if speedConnection then
+        speedConnection:Disconnect()
+    end
+    
+    if speedToggle then
+        speedConnection = RunService.Heartbeat:Connect(function()
+            if player.Character and player.Character.Humanoid then
+                -- Bypass speed limit
+                if player.Character.Humanoid:FindFirstChild("WalkSpeed") then
+                    player.Character.Humanoid.WalkSpeed:Destroy()
+                end
+                player.Character.Humanoid.WalkSpeed = speedSlider:GetValue()
+            end
+        end)
+    else
+        if player.Character and player.Character.Humanoid then
+            player.Character.Humanoid.WalkSpeed = defaultWalkSpeed
+            speedSlider:SetValue(defaultWalkSpeed)
+        end
+    end
+end)
+
+-- ========== NOCLIP SYSTEM ==========
+local noclipTab = window:Tab("Noclip")
+local noclipToggle = false
+local noclipConnection = nil
+
+noclipTab:Toggle("Enable Noclip", false, function(state)
+    noclipToggle = state
+    
+    if noclipConnection then
+        noclipConnection:Disconnect()
+    end
+    
+    if noclipToggle then
+        noclipConnection = RunService.Stepped:Connect(function()
+            if player.Character then
+                for _, part in pairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+-- ========== UTILITIES ==========
+local utilsTab = window:Tab("Utilities")
+utilsTab:Button("Inf Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
+
+-- ========== DEBUG SYSTEM ==========
+local debugTab = window:Tab("Debug")
+debugTab:Label("Connection Monitor")
+
+local function UpdateDebug()
+    local connections = 0
+    if speedConnection then connections += 1 end
+    if noclipConnection then connections += 1 end
+    
+    debugTab:GetLabel(1):UpdateLabel("Active Connections: "..connections)
+end
+
+RunService.Heartbeat:Connect(UpdateDebug)
+
+-- ========== CHARACTER HANDLER ==========
+player.CharacterAdded:Connect(function()
+    InitializeCharacter()
+    
+    if speedConnection then
+        speedConnection:Disconnect()
+        speedConnection = nil
+    end
+    
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+end)
+
+-- ========== UI VISIBILITY TOGGLE ==========
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightControl then
+        window:GetMain().Visible = not window:GetMain().Visible
+    end
+end)
+
+window:GetMain().Visible = true
