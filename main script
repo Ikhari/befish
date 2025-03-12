@@ -7,7 +7,7 @@ local window = Library:Window('Be a Fish')
 local speedBoostTab = window:Tab('Speed Boost')
 speedBoostTab:Label("Speed Boost", Color3.fromRGB(255, 255, 255))
 
-speedBoostTab:Slider("Speed", 16, 1000, 55, function(value)
+speedBoostTab:Slider("Speed", 1, 500, 55, function(value)
     local player = game.Players.LocalPlayer
     if player.Character and player.Character:FindFirstChildOfClass('Humanoid') then
         player.Character.Humanoid.WalkSpeed = value  -- Set WalkSpeed ke nilai slider
